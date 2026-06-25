@@ -107,12 +107,13 @@
         }
         .visual-dots {
             font-family: monospace;
-            color: #52525b;
-            letter-spacing: 3px;
-            line-height: 1.2;
-            margin-top: 5px;
+            color: #ffaa00;
+            font-size: 18px;
+            letter-spacing: 0px;
+            line-height: 0.9; /* Makes vertical spacing match horizontal spacing */
+            margin-top: 8px;
             background: #111;
-            padding: 5px;
+            padding: 10px;
             border-radius: 4px;
             text-align: center;
         }
@@ -136,7 +137,7 @@
     </div>
     
     <div class="input-group">
-        <label for="extendBlocks">Extend Length (How many blocks long?):</label>
+        <label for="extendBlocks">Extend Length (Blocks long):</label>
         <input type="number" id="extendBlocks" value="8">
     </div>
     
@@ -162,31 +163,31 @@ function generateNoseBlueprint() {
     
     container.innerHTML = '';
     
-    // Calculate how much width and height shrink per single block layer
-    // We want it to decrease down toward 0 by the final layer
     const widthStep = width / totalLayers;
     const heightStep = height / totalLayers;
     
     for (let i = 0; i < totalLayers; i++) {
-        // Calculate dimensions for the current layer block
         let layerWidth = Math.max(0.5, width - (widthStep * i));
         let layerHeight = Math.max(0.5, height - (heightStep * i));
         
         const layerDiv = document.createElement('div');
         layerDiv.className = 'layer-box';
         
-        // Generate a mini visual grid representation using text dots
+        // Build the grid grid using square characters (■) instead of long rectangles (█)
         let visualGrid = '';
-        let dotWidth = Math.round(layerWidth);
-        if(dotWidth < 1) dotWidth = 1;
+        let columns = Math.round(layerWidth);
+        let rows = Math.round(layerHeight);
         
-        for(let h=0; h<Math.max(1, Math.round(layerHeight/2)); h++) {
-            visualGrid += '█'.repeat(dotWidth) + '<br>';
+        if (columns < 1) columns = 1;
+        if (rows < 1) rows = 1;
+        
+        for (let h = 0; h < rows; h++) {
+            visualGrid += '■'.repeat(columns) + '<br>';
         }
 
         layerDiv.innerHTML = `
             <div class="layer-title">BLOCK LAYER ${i + 1} (Going Outward)</div>
-            <div class="layer-details">Size: <strong>${layerWidth.toFixed(1)}w</strong> x <strong>${layerHeight.toFixed(1)}h</strong></div>
+            <div class="layer-details">Scale Size: <strong>${layerWidth.toFixed(2)}w</strong> x <strong>${layerHeight.toFixed(2)}h</strong></div>
             <div class="visual-dots">${visualGrid}</div>
         `;
         
