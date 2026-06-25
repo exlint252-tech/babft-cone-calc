@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BABFT Blocky Nose Calculator</title>
+    <title>BABFT 3D Nose Cone Calculator</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -23,7 +23,7 @@
             border-radius: 12px;
             box-shadow: 0 8px 24px rgba(0,0,0,0.4);
             width: 100%;
-            max-width: 450px;
+            max-width: 500px;
         }
         h2 {
             margin-top: 0;
@@ -32,7 +32,13 @@
             text-transform: uppercase;
             letter-spacing: 1px;
         }
+        .input-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
         .input-group {
+            flex: 1;
             margin-bottom: 15px;
         }
         label {
@@ -40,6 +46,7 @@
             margin-bottom: 5px;
             font-weight: bold;
             color: #a1a1aa;
+            font-size: 14px;
         }
         input {
             width: 100%;
@@ -76,86 +83,114 @@
             padding-top: 15px;
             border-top: 2px solid #3f3f46;
         }
-        .step-list {
-            list-style: none;
-            padding: 0;
-            margin: 10px 0;
+        .diagram-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 15px;
         }
-        .step-item {
+        .layer-box {
             background-color: #18181b;
-            padding: 10px;
-            margin-bottom: 8px;
-            border-radius: 4px;
-            border-left: 4px solid #ffaa00;
-            font-family: monospace;
+            padding: 12px;
+            border-radius: 6px;
+            border-left: 5px solid #ffaa00;
+        }
+        .layer-title {
+            font-weight: bold;
+            color: #ffaa00;
+            margin-bottom: 5px;
             font-size: 14px;
         }
-        .highlight {
-            color: #ffaa00;
-            font-weight: bold;
+        .layer-details {
+            font-family: monospace;
+            font-size: 15px;
+        }
+        .visual-dots {
+            font-family: monospace;
+            color: #52525b;
+            letter-spacing: 3px;
+            line-height: 1.2;
+            margin-top: 5px;
+            background: #111;
+            padding: 5px;
+            border-radius: 4px;
+            text-align: center;
         }
     </style>
 </head>
 <body>
 
 <div class="calculator-card">
-    <h2>BABFT Blocky Nose Calc</h2>
+    <h2>BABFT Nose Cone Blueprint</h2>
     
-    <div class="input-group">
-        <label for="width">Cabin Width (studs):</label>
-        <input type="number" id="width" placeholder="e.g., 12" value="12">
+    <div class="input-row">
+        <div class="input-group">
+            <label for="width">Cabin Width (studs):</label>
+            <input type="number" id="width" value="10">
+        </div>
+        
+        <div class="input-group">
+            <label for="height">Cabin Height (studs):</label>
+            <input type="number" id="height" value="10">
+        </div>
     </div>
     
     <div class="input-group">
-        <label for="height">Cabin Height (studs):</label>
-        <input type="number" id="height" placeholder="e.g., 8" value="8">
+        <label for="extendBlocks">Extend Length (How many blocks long?):</label>
+        <input type="number" id="extendBlocks" value="8">
     </div>
     
-    <div class="input-group">
-        <label for="stepDown">Size Drop per Step (studs):</label>
-        <input type="number" id="stepDown" placeholder="e.g., 2" value="2" step="0.5">
-    </div>
-    
-    <button onclick="calculateBlockyNose()">Generate Block Steps</button>
+    <button onclick="generateNoseBlueprint()">Generate Layer Diagram</button>
     
     <div class="results" id="results" style="display: none;">
-        <h3>Your Building Blueprint:</h3>
-        <ul class="step-list" id="stepList"></ul>
-        <p style="font-size: 12px; color: #71717a; margin-top: 15px;">
-            *Center each new segment inside the previous one to keep the nose perfectly straight!
-        </p>
+        <h3>Building Diagram (Layer-by-Layer):</h3>
+        <div class="diagram-container" id="diagramContainer"></div>
     </div>
 </div>
 
 <script>
-function calculateBlockyNose() {
+function generateNoseBlueprint() {
     const width = parseFloat(document.getElementById('width').value);
     const height = parseFloat(document.getElementById('height').value);
-    const stepDown = parseFloat(document.getElementById('stepDown').value);
-    const stepList = document.getElementById('stepList');
+    const totalLayers = parseInt(document.getElementById('extendBlocks').value);
+    const container = document.getElementById('diagramContainer');
     
-    if (isNaN(width) || isNaN(height) || isNaN(stepDown) || stepDown <= 0) {
-        alert("Please enter valid numbers!");
+    if (isNaN(width) || isNaN(height) || isNaN(totalLayers) || totalLayers <= 0) {
+        alert("Please enter valid positive numbers!");
         return;
     }
     
-    // Clear previous results
-    stepList.innerHTML = '';
+    container.innerHTML = '';
     
-    let currentWidth = width;
-    let currentHeight = height;
-    let stepCount = 1;
+    // Calculate how much width and height shrink per single block layer
+    // We want it to decrease down toward 0 by the final layer
+    const widthStep = width / totalLayers;
+    const heightStep = height / totalLayers;
     
-    // Loop until width or height gets too small to step down further
-    while (currentWidth > 0 && currentHeight > 0) {
-        const li = document.createElement('li');
-        li.className = 'step-item';
-        li.innerHTML = `Segment ${stepCount}: <span class="highlight">W: ${currentWidth.toFixed(1)}</span> x <span class="highlight">H: ${currentHeight.toFixed(1)}</span>`;
-        stepList.appendChild(li);
+    for (let i = 0; i < totalLayers; i++) {
+        // Calculate dimensions for the current layer block
+        let layerWidth = Math.max(0.5, width - (widthStep * i));
+        let layerHeight = Math.max(0.5, height - (heightStep * i));
         
-        currentWidth -= stepDown;
-        currentHeight -= stepDown;
-        stepCount++;
+        const layerDiv = document.createElement('div');
+        layerDiv.className = 'layer-box';
+        
+        // Generate a mini visual grid representation using text dots
+        let visualGrid = '';
+        let dotWidth = Math.round(layerWidth);
+        if(dotWidth < 1) dotWidth = 1;
+        
+        for(let h=0; h<Math.max(1, Math.round(layerHeight/2)); h++) {
+            visualGrid += '█'.repeat(dotWidth) + '<br>';
+        }
+
+        layerDiv.innerHTML = `
+            <div class="layer-title">BLOCK LAYER ${i + 1} (Going Outward)</div>
+            <div class="layer-details">Size: <strong>${layerWidth.toFixed(1)}w</strong> x <strong>${layerHeight.toFixed(1)}h</strong></div>
+            <div class="visual-dots">${visualGrid}</div>
+        `;
+        
+        container.appendChild(layerDiv);
     }
     
     document.getElementById('results').style.display = 'block';
